@@ -245,7 +245,6 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
             {
                 throw new KDException("", "审核失败：" + ex.ToString());
             }
-
         }
     }
 }

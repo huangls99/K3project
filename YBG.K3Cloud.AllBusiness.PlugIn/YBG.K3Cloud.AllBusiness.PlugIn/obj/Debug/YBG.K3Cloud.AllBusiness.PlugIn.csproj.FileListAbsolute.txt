@@ -182,3 +182,8 @@ F:\黄连生壹办公\供应商付款控制\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K
 F:\黄连生壹办公\供应商付款控制\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBusiness.PlugIn\obj\Debug\YBG.K3Cloud.AllBusiness.PlugIn.csproj.CopyComplete
 F:\黄连生壹办公\供应商付款控制\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBusiness.PlugIn\obj\Debug\YBG.K3Cloud.AllBusiness.PlugIn.dll
 F:\黄连生壹办公\供应商付款控制\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBusiness.PlugIn\obj\Debug\YBG.K3Cloud.AllBusiness.PlugIn.pdb
+F:\黄连生壹办公\K3Project\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBusiness.PlugIn\obj\Debug\YBG.K3Cloud.AllBusiness.PlugIn.csprojAssemblyReference.cache
+F:\黄连生壹办公\K3Project\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBusiness.PlugIn\obj\Debug\YBG.K3Cloud.AllBusiness.PlugIn.csproj.CoreCompileInputs.cache
+F:\黄连生壹办公\K3Project\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBusiness.PlugIn\obj\Debug\YBG.K3Cloud.AllBusiness.PlugIn.csproj.CopyComplete
+F:\黄连生壹办公\K3Project\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBusiness.PlugIn\obj\Debug\YBG.K3Cloud.AllBusiness.PlugIn.dll
+F:\黄连生壹办公\K3Project\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBusiness.PlugIn\obj\Debug\YBG.K3Cloud.AllBusiness.PlugIn.pdb

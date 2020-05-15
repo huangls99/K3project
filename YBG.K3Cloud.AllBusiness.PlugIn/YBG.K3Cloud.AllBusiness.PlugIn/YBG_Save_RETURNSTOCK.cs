@@ -13,7 +13,6 @@ using System.Threading.Tasks;
 
 namespace YBG.K3Cloud.AllBusiness.PlugIn
 {
-
     [Description("销售退货单保存更新总修改金额")]
     [Kingdee.BOS.Util.HotUpdate]
     public  class YBG_Save_RETURNSTOCK : AbstractOperationServicePlugIn
@@ -43,7 +42,5 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
                 throw new KDException("", "保存失败：" + ex.ToString());
             }
         }
-
-
     }
 }
