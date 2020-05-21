@@ -20,6 +20,8 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
     [Kingdee.BOS.Util.HotUpdate]
     public class YBG_UnAudit_AR_RECEIVEBILL : AbstractOperationServicePlugIn
     {
+
+        
         public override void EndOperationTransaction(EndOperationTransactionArgs e)
         {
             try
