@@ -42,7 +42,10 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
                         {
                             string upsql = "";
                             string UpdatesqlH = "";
-                            sql = string.Format(@"select ar.FMODIFYDATE as 修改时间,ar.F_YBG_CheckBox ,are.FENTRYID as AreFENTRYID,arel.FBASICUNITQTY, arf.FALLAMOUNT as 表头价税合计,arf.FNOTAXAMOUNT as 表头不含税金额 , are.FALLAMOUNTFOR as 表体价税合计,arE.FNOTAXAMOUNTFOR as 表体不含税金额 ,arE.FPRICEQTY as 计价数量 ,arel.FSTABLENAME,arel.FSID
+                            sql = string.Format(@"select ar.FMODIFYDATE as 修改时间,ar.F_YBG_CheckBox,arE.FTAXPRICE as  含税单价,arE.FPRICE as 不含税单价,
+                                                  are.FENTRYID as AreFENTRYID,arel.FBASICUNITQTY, arf.FALLAMOUNT as 表头价税合计,
+                                                  arf.FNOTAXAMOUNT as 表头不含税金额 , are.FALLAMOUNTFOR as 表体价税合计,are.FIsModifyPrice,
+                                                  arE.FNOTAXAMOUNTFOR as 表体不含税金额 ,arE.FPRICEQTY as 计价数量 ,arel.FSTABLENAME,arel.FSID
                                                    from t_AR_receivable ar inner join t_AR_receivableEntry arE on ar.FID=arE.FID
                                                    inner join T_AR_RECEIVABLEENTRY_LK arel on arel.FENTRYID=are.FENTRYID
                                                    left join t_AR_receivableFIN  arf on arf.FID=ar.FID  where ar.FID='{0}'", Fid);
@@ -54,12 +57,16 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
                                 for (int i = 0; i < dt.Rows.Count; i++)
                                 {
                                     string FSID = dt.Rows[i]["FSID"].ToString();
+                                    //是否修改了单价
+                                    string FIsModifyPrice= dt.Rows[i]["FIsModifyPrice"].ToString();
                                     //decimal FALLAMOUNT = Convert.ToDecimal(dt.Rows[i]["表头价税合计"].ToString());
                                     // decimal FNOTAXAMOUNT = Convert.ToDecimal(dt.Rows[i]["表头不含税金额"].ToString());
                                     decimal FALLAMOUNTFOR = Math.Abs(Convert.ToDecimal(dt.Rows[i]["表体价税合计"].ToString()));
                                     decimal FNOTAXAMOUNTFOR = Math.Abs(Convert.ToDecimal(dt.Rows[i]["表体不含税金额"].ToString()));
                                     decimal FPRICEQTY = Math.Abs(Convert.ToDecimal(dt.Rows[i]["计价数量"].ToString()));
-                                    decimal FBASICUNITQTY = Math.Abs(Convert.ToDecimal(dt.Rows[i]["FBASICUNITQTY"].ToString()));//暂估基本数量
+                                    decimal FBASICUNITQTY = Math.Abs(Convert.ToDecimal(dt.Rows[i]["FBASICUNITQTY"].ToString()));//暂估基本数量、
+                                    decimal FTAXPRICE = Math.Abs(Convert.ToDecimal(dt.Rows[i]["含税单价"].ToString())); //含税单价
+                                    decimal FPRICE= Math.Abs(Convert.ToDecimal(dt.Rows[i]["不含税单价"].ToString())); //不含税单价
                                     string FMODIFYDATE= dt.Rows[i]["修改时间"].ToString();
                                     //string F_YBG_CheckBox= dt.Rows[i]["F_YBG_CheckBox"].ToString();
                                     if (FPRICEQTY!= FBASICUNITQTY)
@@ -68,15 +75,9 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
                                         FNOTAXAMOUNTFOR = FNOTAXAMOUNTFOR * (FBASICUNITQTY / FPRICEQTY);
                                         FPRICEQTY = FBASICUNITQTY;
                                     }
-                                    //一张出库单对多张应收单只要有一张财务应收修改过价税合计默认是修改的
-                                    sql = string.Format(@"select max(ar.F_YBG_CheckBox) as F_YBG_CheckBox
-                                                   from t_AR_receivable ar inner join t_AR_receivableEntry arE on ar.FID=arE.FID
-                                                   inner join T_AR_RECEIVABLEENTRY_LK arel on arel.FENTRYID=are.FENTRYID where arel.FSID='{0}'", FSID);
-                                    string F_YBG_CheckBox = DBServiceHelper.ExecuteScalar<string>(this.Context, sql, null, null);
-                                    if (F_YBG_CheckBox == null)
-                                    {
-                                        F_YBG_CheckBox = "0";
-                                    }
+                                    //更新暂估应收
+                                    upsql += string.Format(@"/*dialect*/ update t_AR_receivableEntry set FIsLockPrice=1  where FENTRYID ='{0}'", FSID);
+                                
                                     string FSTABLENAME = "";
                                     sql = string.Format(@"select FSID as 销售出库单FENTRYID ,FSBILLID as 销售出库单id,FSTABLENAME 
                                                           from  T_AR_RECEIVABLEENTRY_LK where FENTRYID={0}", FSID);
@@ -89,18 +90,21 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
                                              FSTABLENAME = dt2.Rows[j]["FSTABLENAME"].ToString();
                                             if (FSTABLENAME == "T_SAL_OUTSTOCKENTRY")
                                             {
-                                           
                                                 //销售出库单表头
-                                                UpdatesqlH += string.Format(@"/*dialect*/ update T_SAL_OUTSTOCK set FARFNOTAXAMOUNTFOR_H=FARFNOTAXAMOUNTFOR_H+{1},FARFALLAMOUNTFOR_H=FARFALLAMOUNTFOR_H+{2},FARFMODIFYDATE='{3}',F_YBG_CheckBox={4}  where FID ='{0}'", dt2.Rows[j]["销售出库单id"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FMODIFYDATE, F_YBG_CheckBox);
+                                                UpdatesqlH += string.Format(@"/*dialect*/ update T_SAL_OUTSTOCK set FARFNOTAXAMOUNTFOR_H=FARFNOTAXAMOUNTFOR_H+{1},FARFALLAMOUNTFOR_H=FARFALLAMOUNTFOR_H+{2},FARFMODIFYDATE='{3}' 
+                                                                                   where FID ='{0}'", dt2.Rows[j]["销售出库单id"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FMODIFYDATE);
                                                 //销售出库单表体
-                                                upsql += string.Format(@"/*dialect*/ update T_SAL_OUTSTOCKENTRY set FARFNOTAXAMOUNTFOR=FARFNOTAXAMOUNTFOR+{1},FARFALLAMOUNTFOR=FARFALLAMOUNTFOR+{2} ,FARFQty=FARFQty+{3}  where FENTRYID ='{0}'", dt2.Rows[j]["销售出库单FENTRYID"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FPRICEQTY);
+                                                upsql += string.Format(@"/*dialect*/ update T_SAL_OUTSTOCKENTRY set FARFNOTAXAMOUNTFOR=FARFNOTAXAMOUNTFOR+{1},FARFALLAMOUNTFOR=FARFALLAMOUNTFOR+{2} ,FARFQty=FARFQty+{3},FARFTAXPRICE={4},FIsModifyPrice={5},FARFPRICE={6},  
+                                                                             where FENTRYID ='{0}'", dt2.Rows[j]["销售出库单FENTRYID"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FPRICEQTY, FTAXPRICE, FIsModifyPrice, FPRICE);
                                             }
                                             else
                                             {
                                                 //销售退货单表头
-                                                UpdatesqlH += string.Format(@"/*dialect*/ update T_SAL_RETURNSTOCK set FARFNOTAXAMOUNTFOR_H=FARFNOTAXAMOUNTFOR_H+{1},FARFALLAMOUNTFOR_H=FARFALLAMOUNTFOR_H+{2},FARFMODIFYDATE='{3}' ,F_YBG_CheckBox={4}   where FID ='{0}'", dt2.Rows[j]["销售出库单id"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FMODIFYDATE, F_YBG_CheckBox);
+                                                UpdatesqlH += string.Format(@"/*dialect*/ update T_SAL_RETURNSTOCK set FARFNOTAXAMOUNTFOR_H=FARFNOTAXAMOUNTFOR_H+{1},FARFALLAMOUNTFOR_H=FARFALLAMOUNTFOR_H+{2},FARFMODIFYDATE='{3}'  
+                                                                                 where FID ='{0}'", dt2.Rows[j]["销售出库单id"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FMODIFYDATE);
                                                 //销售退货表体
-                                                upsql += string.Format(@"/*dialect*/ update T_SAL_RETURNSTOCKENTRY set FARFNOTAXAMOUNTFOR=FARFNOTAXAMOUNTFOR+{1},FARFALLAMOUNTFOR=FARFALLAMOUNTFOR+{2} ,FARFQty=FARFQty+{3}  where FENTRYID ='{0}'", dt2.Rows[j]["销售出库单FENTRYID"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FPRICEQTY);
+                                                upsql += string.Format(@"/*dialect*/ update T_SAL_RETURNSTOCKENTRY set FARFNOTAXAMOUNTFOR=FARFNOTAXAMOUNTFOR+{1},FARFALLAMOUNTFOR=FARFALLAMOUNTFOR+{2} ,FARFQty=FARFQty+{3}  
+                                                                               where FENTRYID ='{0}'", dt2.Rows[j]["销售出库单FENTRYID"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FPRICEQTY);
                                             }
                                         }
                                     }

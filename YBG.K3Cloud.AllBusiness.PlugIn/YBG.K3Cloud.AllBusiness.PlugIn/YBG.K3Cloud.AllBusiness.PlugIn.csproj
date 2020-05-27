@@ -95,6 +95,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="YBG_Audit_AR_Receivable.cs" />
     <Compile Include="YBG_Audit_AR_RECEIVEBILL.cs" />
+    <Compile Include="YBG_Push_ARZToARF.cs" />
+    <Compile Include="YBG_Push_OutstockTOReturnStock.cs" />
     <Compile Include="YBG_Push_PayableToPayapply.cs" />
     <Compile Include="YBG_SAL_OUTSTOCK.cs" />
     <Compile Include="YBG_Save_AR_RECEIVEBILL.cs" />
