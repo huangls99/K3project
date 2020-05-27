@@ -186,3 +186,4 @@ F:\黄连生壹办公\K3Project\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBu
 F:\黄连生壹办公\K3Project\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBusiness.PlugIn\obj\Debug\YBG.K3Cloud.AllBusiness.PlugIn.csproj.CopyComplete
 F:\黄连生壹办公\K3Project\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBusiness.PlugIn\obj\Debug\YBG.K3Cloud.AllBusiness.PlugIn.dll
 F:\黄连生壹办公\K3Project\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBusiness.PlugIn\obj\Debug\YBG.K3Cloud.AllBusiness.PlugIn.pdb
+F:\黄连生壹办公\K3Project\YBG.K3Cloud.AllBusiness.PlugIn\YBG.K3Cloud.AllBusiness.PlugIn\obj\Debug\YBG.K3Cloud.AllBusiness.PlugIn.csprojAssemblyReference.cache
