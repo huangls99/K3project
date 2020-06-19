@@ -41,10 +41,16 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
                     string FORDERENTRYID = Item[a - 1]["FORDERENTRYID"].ToString();
                     //物料
                     string FMATERIALID = Item[a - 1]["FMATERIALID_Id"].ToString();
-                    sql = string.Format(@"select g.FALLAMOUNT as 价税合计,f.FREALRECAMOUNT as 收款金额  from t_PUR_POOrderEntry c   
+                    sql = string.Format(@"select ar.arFALLAMOUNTFOR as 应收金额,sk.skFREALRECAMOUNT as 收款金额, sal.F_YBG_BUSINESSMODEL as 业务模式 from t_PUR_POOrderEntry c   
                                               inner join T_PUR_POORDERENTRY_LK d on d.FENTRYID=c.FENTRYID 
                                               inner join T_SAL_ORDERENTRY f on d.FSID=f.FENTRYID 
                                               inner join T_SAL_ORDERENTRY_F g on f.FENTRYID=g.FENTRYID
+											  left  join T_SAL_ORDER sal on sal.FID=f.FENTRYID
+											  left join (select sum(are.FALLAMOUNTFOR) as  arFALLAMOUNTFOR  ,FORDERENTRYID  from  T_AR_RECEIVABLE ar 
+                                              inner join T_AR_RECEIVABLEENTRY arE  on ar.FID=are.FID where ar.FDOCUMENTSTATUS='C' and ar.FBILLTYPEID='5d18aa0e58407c' and ar.FSETACCOUNTTYPE='3' 
+											  group by FORDERENTRYID)ar on ar.FORDERENTRYID=f.FENTRYID
+				                              left  join (select FORDERENTRYID, sum(a.FREALRECAMOUNT) as  skFREALRECAMOUNT from T_AR_RECEIVEBILLSRCENTRY  a 
+				                              left join T_AR_RECEIVEBILL b on a.FId=b.FID where b.FDOCUMENTSTATUS='C' group by FORDERENTRYID) sk on sk.FORDERENTRYID=f.FENTRYID
                                               where c.FENTRYID='{0}'", FORDERENTRYID);
                     DataSet ds = DBServiceHelper.ExecuteDataSet(this.Context, sql);
                     DataTable dt = ds.Tables[0];
@@ -52,24 +58,31 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
                     {
                         for (int i = 0; i < dt.Rows.Count; i++)
                         {
-                            //价税合计
-                            decimal FALLAMOUNT = Convert.ToDecimal(dt.Rows[i]["价税合计"].ToString());
-
-                            //收款金额
-                            decimal FREALRECAMOUNT = Convert.ToDecimal(dt.Rows[i]["收款金额"].ToString());
-
-                            //比例
-                            decimal proportion = FREALRECAMOUNT / FALLAMOUNT;
-
-                            if (proportion == 0)
+                            //业务模式
+                            string F_YBG_BusinessModel = string.IsNullOrEmpty(dt.Rows[i]["业务模式"].ToString()) ? "" : dt.Rows[i]["业务模式"].ToString();
+                            //只有挂靠的才会收到货款的时候就付款
+                            if(F_YBG_BusinessModel == "01" || F_YBG_BusinessModel == "04")
                             {
-                                Item.RemoveAt(a-1);
+                                //价税合计
+                                decimal FALLAMOUNT = Convert.ToDecimal(dt.Rows[i]["应收金额"].ToString());
+
+                                //收款金额
+                                decimal FREALRECAMOUNT = Convert.ToDecimal(dt.Rows[i]["收款金额"].ToString());
+
+                                //比例
+                                decimal proportion = FREALRECAMOUNT / FALLAMOUNT;
+
+                                if (proportion == 0)
+                                {
+                                    Item.RemoveAt(a - 1);
+                                }
+                                else
+                                {
+                                    //付款申请金额
+                                    Item[a - 1]["FAPPLYAMOUNTFOR"] = Convert.ToDecimal(Item[a - 1]["FAPPLYAMOUNTFOR"]) * proportion;
+                                }
                             }
-                            else
-                            {
-                                //付款申请金额
-                                Item[a - 1]["FAPPLYAMOUNTFOR"] = Convert.ToDecimal(Item[a - 1]["FAPPLYAMOUNTFOR"]) * proportion;
-                            }
+                           
                         }
                     }
                 }

@@ -42,7 +42,7 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
                         {
                             string upsql = "";
                             string UpdatesqlH = "";
-                            sql = string.Format(@"select ar.FMODIFYDATE as 修改时间,ar.F_YBG_CheckBox,arE.FTAXPRICE as  含税单价,arE.FPRICE as 不含税单价,
+                            sql = string.Format(@"select are.FORDERENTRYID as FORDERENTRYID,ar.FMODIFYDATE as 修改时间,ar.F_YBG_CheckBox,arE.FTAXPRICE as  含税单价,arE.FPRICE as 不含税单价,
                                                   are.FENTRYID as AreFENTRYID,arel.FBASICUNITQTY, arf.FALLAMOUNT as 表头价税合计,
                                                   arf.FNOTAXAMOUNT as 表头不含税金额 , are.FALLAMOUNTFOR as 表体价税合计,are.FIsModifyPrice,
                                                   arE.FNOTAXAMOUNTFOR as 表体不含税金额 ,arE.FPRICEQTY as 计价数量 ,arel.FSTABLENAME,arel.FSID
@@ -56,6 +56,7 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
                                 
                                 for (int i = 0; i < dt.Rows.Count; i++)
                                 {
+                                    string FORDERENTRYID= dt.Rows[i]["FORDERENTRYID"].ToString();
                                     string FSID = dt.Rows[i]["FSID"].ToString();
                                     //是否修改了单价
                                     string FIsModifyPrice= dt.Rows[i]["FIsModifyPrice"].ToString();
@@ -91,20 +92,21 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
                                             if (FSTABLENAME == "T_SAL_OUTSTOCKENTRY")
                                             {
                                                 //销售出库单表头
-                                                UpdatesqlH += string.Format(@"/*dialect*/ update T_SAL_OUTSTOCK set FARFNOTAXAMOUNTFOR_H=FARFNOTAXAMOUNTFOR_H+{1},FARFALLAMOUNTFOR_H=FARFALLAMOUNTFOR_H+{2},FARFMODIFYDATE='{3}' 
-                                                                                   where FID ='{0}'", dt2.Rows[j]["销售出库单id"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FMODIFYDATE);
+                                                UpdatesqlH += string.Format(@"/*dialect*/ update T_SAL_OUTSTOCK set FARFNOTAXAMOUNTFOR_H=FARFNOTAXAMOUNTFOR_H+{1},FARFALLAMOUNTFOR_H=FARFALLAMOUNTFOR_H+{2},FARFMODIFYDATE='{3}'   
+                                                                                   from  T_SAL_OUTSTOCK a inner join T_SAL_OUTSTOCKENTRY_R b on a.FID=b.FID where a.FID ='{0}' and FSOENTRYID='{4}'", dt2.Rows[j]["销售出库单id"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FMODIFYDATE, FORDERENTRYID);
                                                 //销售出库单表体
-                                                upsql += string.Format(@"/*dialect*/ update T_SAL_OUTSTOCKENTRY set FARFNOTAXAMOUNTFOR=FARFNOTAXAMOUNTFOR+{1},FARFALLAMOUNTFOR=FARFALLAMOUNTFOR+{2} ,FARFQty=FARFQty+{3},FARFTAXPRICE={4},FIsModifyPrice={5},FARFPRICE={6},  
-                                                                             where FENTRYID ='{0}'", dt2.Rows[j]["销售出库单FENTRYID"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FPRICEQTY, FTAXPRICE, FIsModifyPrice, FPRICE);
+                                                upsql += string.Format(@"/*dialect*/ update T_SAL_OUTSTOCKENTRY set FARFNOTAXAMOUNTFOR=FARFNOTAXAMOUNTFOR+{1},FARFALLAMOUNTFOR=FARFALLAMOUNTFOR+{2} ,FARFQty=FARFQty+{3},FARFTAXPRICE={4},FIsModifyPrice={5},FARFPRICE={6}  
+                                                                             from  T_SAL_OUTSTOCKENTRY a inner join T_SAL_OUTSTOCKENTRY_R b on a.FID=b.FID where a.FENTRYID ='{0}'and FSOENTRYID='{7}'", dt2.Rows[j]["销售出库单FENTRYID"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FPRICEQTY, FTAXPRICE, FIsModifyPrice, FPRICE, FORDERENTRYID);
                                             }
                                             else
                                             {
                                                 //销售退货单表头
-                                                UpdatesqlH += string.Format(@"/*dialect*/ update T_SAL_RETURNSTOCK set FARFNOTAXAMOUNTFOR_H=FARFNOTAXAMOUNTFOR_H+{1},FARFALLAMOUNTFOR_H=FARFALLAMOUNTFOR_H+{2},FARFMODIFYDATE='{3}'  
-                                                                                 where FID ='{0}'", dt2.Rows[j]["销售出库单id"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FMODIFYDATE);
+                                                UpdatesqlH += string.Format(@"/*dialect*/ update T_SAL_RETURNSTOCK set FARFNOTAXAMOUNTFOR_H=FARFNOTAXAMOUNTFOR_H+{1},FARFALLAMOUNTFOR_H=FARFALLAMOUNTFOR_H+{2},FARFMODIFYDATE='{3}'     
+                                                                           from  T_SAL_RETURNSTOCK a inner join T_SAL_RETURNSTOCKENTRY b on a.FID=b.FID  
+                                                                          where a.FID ='{0}'and FSOENTRYID='{4}'", dt2.Rows[j]["销售出库单id"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FMODIFYDATE, FORDERENTRYID);
                                                 //销售退货表体
-                                                upsql += string.Format(@"/*dialect*/ update T_SAL_RETURNSTOCKENTRY set FARFNOTAXAMOUNTFOR=FARFNOTAXAMOUNTFOR+{1},FARFALLAMOUNTFOR=FARFALLAMOUNTFOR+{2} ,FARFQty=FARFQty+{3}  
-                                                                               where FENTRYID ='{0}'", dt2.Rows[j]["销售出库单FENTRYID"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FPRICEQTY);
+                                                upsql += string.Format(@"/*dialect*/ update T_SAL_RETURNSTOCKENTRY set FARFNOTAXAMOUNTFOR=FARFNOTAXAMOUNTFOR+{1},FARFALLAMOUNTFOR=FARFALLAMOUNTFOR+{2} ,FARFQty=FARFQty+{3},FARFTAXPRICE={5},FIsModifyPrice={6},FARFPRICE={7}    
+                                                                               where FENTRYID ='{0}'and FSOENTRYID='{4}'", dt2.Rows[j]["销售出库单FENTRYID"].ToString(), FNOTAXAMOUNTFOR, FALLAMOUNTFOR, FPRICEQTY, FORDERENTRYID,FTAXPRICE, FIsModifyPrice, FPRICE);
                                             }
                                         }
                                     }
@@ -188,18 +190,21 @@ namespace YBG.K3Cloud.AllBusiness.PlugIn
                                             if (FSTABLENAME == "T_SAL_OUTSTOCKENTRY")
                                             {
                                                 hsset.Add(dt2.Rows[j]["销售出库单id"].ToString());
-                                                //销售出库单表头
-                                                upsql += string.Format(@"/*dialect*/ update T_SAL_OUTSTOCKENTRY set FTotalARFNOTAXAMOUNTFOR=FARFNOTAXAMOUNTFOR+(b.FSALUNITQTY-FARFQty)*b.FPRICE,
-                                                                             FTotalARFALLAMOUNTFOR=FARFALLAMOUNTFOR+(b.FSALUNITQTY-FARFQty)*b.FTAXPRICE
-                                                                          from T_SAL_OUTSTOCKENTRY a inner join T_SAL_OUTSTOCKENTRY_F b on b.FENTRYID=a.FENTRYID where a.FENTRYID={0}", dt2.Rows[j]["销售出库单FENTRYID"].ToString());
+                                                //销售出库单表体
+                                                upsql += string.Format(@"/*dialect*/update T_SAL_OUTSTOCKENTRY set FTotalARFNOTAXAMOUNTFOR=(b.FSALUNITQTY-FARFQty)*b.FPRICE+FARFQty*a.FARFPRICE,
+                                                                              FTotalARFALLAMOUNTFOR=(b.FSALUNITQTY-FARFQty)*b.FPRICE+FARFQty*a.FARFPRICE +((b.FSALUNITQTY-FARFQty)*b.FPRICE+FARFQty*a.FARFPRICE)*FTAXRATE/100
+                                                                             from T_SAL_OUTSTOCKENTRY a inner join T_SAL_OUTSTOCKENTRY_F b on b.FENTRYID=a.FENTRYID
+                                                                             where a.FENTRYID={0}", dt2.Rows[j]["销售出库单FENTRYID"].ToString());
                                             }
                                             else
                                             {
                                                 hsset.Add(dt2.Rows[j]["销售出库单id"].ToString());
                                                 //销售退货表体
-                                                upsql += string.Format(@"/*dialect*/ update T_SAL_RETURNSTOCKENTRY set FTotalARFNOTAXAMOUNTFOR=FARFNOTAXAMOUNTFOR+(b.FSALUNITQTY-FARFQty)*b.FPRICE,
-                                                                             FTotalARFALLAMOUNTFOR=FARFALLAMOUNTFOR+(b.FSALUNITQTY-FARFQty)*b.FTAXPRICE
-                                                                          from T_SAL_RETURNSTOCKENTRY a inner join T_SAL_RETURNSTOCKENTRY_F b on b.FENTRYID=a.FENTRYID where a.FENTRYID={0}", dt2.Rows[j]["销售出库单FENTRYID"].ToString());
+                                                upsql += string.Format(@"/*dialect*/ update T_SAL_RETURNSTOCKENTRY 
+                                                                           set FTotalARFNOTAXAMOUNTFOR=(a.FREALQTY-FARFQty)*b.FPRICE+FARFQty*a.FARFPRICE,
+                                                                           FTotalARFALLAMOUNTFOR=(a.FREALQTY-FARFQty)*b.FPRICE+FARFQty*a.FARFPRICE +((a.FREALQTY-FARFQty)*b.FPRICE+FARFQty*a.FARFPRICE)*FTAXRATE/100
+                                                                           from T_SAL_RETURNSTOCKENTRY a inner join T_SAL_RETURNSTOCKENTRY_F b on b.FENTRYID=a.FENTRYID 
+                                                                           where a.FENTRYID={0}", dt2.Rows[j]["销售出库单FENTRYID"].ToString());
                                             }
                                         }
                                     }
